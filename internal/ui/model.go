@@ -1,25 +1,32 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/Danryg/bulletterm/internal/ui/views"
+)
 
 type viewState int
 
 const (
-	listView viewState = iota
+	listView  viewState = iota
+	notesList viewState = iota
 	helpView
 )
 
 type Model struct {
-	state viewState
-	list  listModel
-	help  helpModel
+	state     viewState
+	notesList views.NotesListModel
+	list      views.ListModel
+	help      views.HelpModel
 }
 
 func InitialModel() Model {
 	return Model{
-		state: listView,
-		list:  initialListModel(),
-		help:  initialHelpModel(),
+		state:     notesList,
+		notesList: views.InitialNotesListModel(),
+		list:      views.InitialListModel(),
+		help:      views.InitialHelpModel(),
 	}
 }
 
@@ -29,11 +36,22 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
-	if key, ok := msg.(tea.KeyMsg); ok  && key.String() == "q" {
+	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "q" {
 		return m, tea.Quit
 	}
 
 	switch m.state {
+
+	case notesList:
+		newNotesList, cmd := m.notesList.Update(msg)
+		m.notesList = newNotesList
+
+		// example: switch to list view
+		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "l" {
+			m.state = listView
+		}
+
+		return m, cmd
 
 	case listView:
 		newList, cmd := m.list.Update(msg)
@@ -57,15 +75,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
-
-
-
 	return m, nil
 }
 
 func (m Model) View() string {
 
 	switch m.state {
+	case notesList:
+		return m.notesList.View()
 
 	case listView:
 		return m.list.View()

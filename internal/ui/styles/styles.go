@@ -1,12 +1,12 @@
-package ui
+package styles
 
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	keywordStyle = lipgloss.NewStyle().
+	KeywordStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("204")).
 		Background(lipgloss.Color("235"))
 
-	helpStyle = lipgloss.NewStyle().
+	HelpStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241"))
 )

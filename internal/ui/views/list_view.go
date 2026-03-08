@@ -1,29 +1,31 @@
-package ui
+package views
 
 import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/Danryg/bulletterm/internal/ui/styles"
 )
 
-type listModel struct {
+type ListModel struct {
 	choices  []string
 	cursor   int
 	selected map[int]struct{}
 }
 
-func initialListModel() listModel {
-	return listModel{
+func InitialListModel() ListModel {
+	return ListModel{
 		choices: []string{
-			"Buy carrots",
-			"Buy celery",
-			"Buy kohlrabi",
+			"TODO 1",
+			"TODO 2",
+			"TODO 3",
 		},
 		selected: make(map[int]struct{}),
 	}
 }
 
-func (m listModel) Update(msg tea.Msg) (listModel, tea.Cmd) {
+func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
@@ -55,7 +57,7 @@ func (m listModel) Update(msg tea.Msg) (listModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m listModel) View() string {
+func (m ListModel) View() string {
 
 	s := "What should we buy at the market?\n\n"
 
@@ -76,5 +78,5 @@ func (m listModel) View() string {
 
 	s += "\nPress q to quit.\n"
 
-	return s + helpStyle.Render("space: select • h: help • q: quit\n")
+	return s + styles.HelpStyle.Render("space: select • h: help • q: quit\n")
 }
