@@ -3,8 +3,10 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/Danryg/bulletterm/internal/notes"
 	"github.com/Danryg/bulletterm/internal/ui/views"
 )
+
 
 type viewState int
 
@@ -15,16 +17,18 @@ const (
 )
 
 type Model struct {
+	store     *notes.Store
 	state     viewState
 	notesList views.NotesListModel
 	list      views.ListModel
 	help      views.HelpModel
 }
 
-func InitialModel() Model {
+func InitialModel(store *notes.Store) Model {
 	return Model{
+		store:     store,
 		state:     notesList,
-		notesList: views.InitialNotesListModel(),
+		notesList: views.InitialNotesListModel(store),
 		list:      views.InitialListModel(),
 		help:      views.InitialHelpModel(),
 	}
@@ -35,33 +39,29 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-
-	if key, ok := msg.(tea.KeyMsg); ok && key.String() == "q" {
-		return m, tea.Quit
+	if openMsg, ok := msg.(views.OpenNoteMsg); ok {
+		m.list = m.list.WithNote(openMsg.Note, m.store)
+		m.state = listView
+		return m, nil
 	}
 
 	switch m.state {
 
 	case notesList:
+		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "q" && !m.notesList.IsInputting() {
+			return m, tea.Quit
+		}
 		newNotesList, cmd := m.notesList.Update(msg)
 		m.notesList = newNotesList
-
-		// example: switch to list view
-		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "l" {
-			m.state = listView
-		}
-
 		return m, cmd
 
 	case listView:
+		if key, ok := msg.(tea.KeyMsg); ok && (key.String() == "esc" || key.String() == "q") && !m.list.IsInputting() {
+			m.state = notesList
+			return m, nil
+		}
 		newList, cmd := m.list.Update(msg)
 		m.list = newList
-
-		// example: switch to help screen
-		if key, ok := msg.(tea.KeyMsg); ok && key.String() == "h" {
-			m.state = helpView
-		}
-
 		return m, cmd
 
 	case helpView:
