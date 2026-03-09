@@ -27,6 +27,12 @@ type NotesListModel struct {
 	cursor int
 	mode   notesListMode
 	input  string
+	height int
+}
+
+func (m NotesListModel) WithHeight(h int) NotesListModel {
+	m.height = h
+	return m
 }
 
 func InitialNotesListModel(store *notes.Store) NotesListModel {
@@ -89,6 +95,18 @@ func (m NotesListModel) Update(msg tea.Msg) (NotesListModel, tea.Cmd) {
 	return m, nil
 }
 
+func countTodos(body string) (done, total int) {
+	for _, line := range strings.Split(body, "\n") {
+		if strings.HasPrefix(line, "[x] ") {
+			done++
+			total++
+		} else if strings.HasPrefix(line, "[ ] ") {
+			total++
+		}
+	}
+	return
+}
+
 func formatDate(t time.Time) string {
 	today := time.Now()
 	yesterday := today.AddDate(0, 0, -1)
@@ -109,19 +127,18 @@ func sameDay(a, b time.Time) bool {
 }
 
 func (m NotesListModel) View() string {
+	help := styles.HelpStyle.Render("n: new note • ↑/↓ k/j: navigate • enter: open • q: quit")
+
 	if m.mode == modeCreating {
-		return fmt.Sprintf(
-			"New note title:\n\n> %s_\n\n%s",
-			m.input,
-			styles.HelpStyle.Render("enter: save • esc: cancel"),
-		)
+		content := fmt.Sprintf("New note title:\n\n> %s_\n", m.input)
+		return padToBottom(content, styles.HelpStyle.Render("enter: save • esc: cancel"), m.height)
 	}
 
 	allNotes := m.store.All()
 	s := "Notes\n\n"
 
 	if len(allNotes) == 0 {
-		s += "No notes yet.\n\n"
+		s += "No notes yet.\n"
 	} else {
 		lastDate := ""
 		for i, n := range allNotes {
@@ -134,10 +151,15 @@ func (m NotesListModel) View() string {
 			if m.cursor == i {
 				cursor = ">"
 			}
-			s += fmt.Sprintf("%s %s\n", cursor, n.Title)
+			done, total := countTodos(n.Body)
+			todoInfo := ""
+			if total > 0 {
+				todoInfo = fmt.Sprintf(" (%d/%d)", done, total)
+			}
+			s += fmt.Sprintf("%s %s%s\n", cursor, n.Title, todoInfo)
 		}
-		s += "\n"
 	}
 
-	return s + styles.HelpStyle.Render("n: new note • ↑/↓ k/j: navigate • enter: open • q: quit")
+	return padToBottom(s, help, m.height)
 }
+

@@ -39,6 +39,13 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if sizeMsg, ok := msg.(tea.WindowSizeMsg); ok {
+		m.notesList = m.notesList.WithHeight(sizeMsg.Height)
+		m.list = m.list.WithHeight(sizeMsg.Height)
+		m.help = m.help.WithHeight(sizeMsg.Height)
+		return m, nil
+	}
+
 	if openMsg, ok := msg.(views.OpenNoteMsg); ok {
 		m.list = m.list.WithNote(openMsg.Note, m.store)
 		m.state = listView
