@@ -29,6 +29,12 @@ type ListModel struct {
 	cursor int
 	mode   listMode
 	input  string
+	height int
+}
+
+func (m ListModel) WithHeight(h int) ListModel {
+	m.height = h
+	return m
 }
 
 func InitialListModel() ListModel {
@@ -128,12 +134,8 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 
 func (m ListModel) View() string {
 	if m.mode == listModeCreating {
-		return fmt.Sprintf(
-			"%s\n\nNew item:\n\n> %s_\n\n%s",
-			m.note.Title,
-			m.input,
-			styles.HelpStyle.Render("enter: save • esc: cancel"),
-		)
+		content := fmt.Sprintf("%s\n\nNew item:\n\n> %s_\n", m.note.Title, m.input)
+		return padToBottom(content, styles.HelpStyle.Render("enter: save • esc: cancel"), m.height)
 	}
 
 	s := fmt.Sprintf("%s\n\n", m.note.Title)
@@ -154,6 +156,17 @@ func (m ListModel) View() string {
 		}
 	}
 
-	s += "\n"
-	return s + styles.HelpStyle.Render("n: new item • space/enter: check • ↑/↓ k/j: navigate • esc: back • q: quit")
+	return padToBottom(s, styles.HelpStyle.Render("n: new item • space/enter: check • ↑/↓ k/j: navigate • esc: back • q: quit"), m.height)
+}
+
+func padToBottom(content, help string, height int) string {
+	if height == 0 {
+		return content + "\n" + help
+	}
+	contentLines := strings.Count(content, "\n")
+	padding := height - contentLines - 1
+	if padding < 1 {
+		padding = 1
+	}
+	return content + strings.Repeat("\n", padding) + help
 }
